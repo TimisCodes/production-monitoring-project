@@ -1,0 +1,10 @@
+.DS_Store
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store
+.env
+priv_key.pem
+pub_key.pem
+/templates
+.vscode/
+*node_modules/*

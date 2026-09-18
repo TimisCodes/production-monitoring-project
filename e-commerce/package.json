@@ -1,0 +1,58 @@
+{
+  "name": "e-commerce",
+  "version": "1.0.0",
+  "description": "e-commerce backend project ",
+  "main": "index.js",
+  "scripts": {
+    "pretest": "node tests/testData/initTestData.js",
+    "test": "jest",
+    "posttest": "node tests/testData/removeTestData.js",
+    "install": "node lib/customAuth/genKeyPair.js",
+    "start": "npx nodemon index.js"
+  },
+  "author": "Carolyn Kearney",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "body-parser": "^1.19.0",
+    "connect-pg-simple": "^7.0.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "csurf": "^1.11.0",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "express-session": "^1.17.2",
+    "helmet": "^4.6.0",
+    "http-errors": "^1.8.1",
+    "jsonwebtoken": "^8.5.1",
+    "passport": "^0.5.0",
+    "passport-jwt": "^4.0.0",
+    "passport-local": "^1.0.0",
+    "pg": "^8.7.1",
+    "stripe": "^8.195.0",
+    "swagger-client": "^3.18.4",
+    "swagger-jsdoc": "^6.2.1",
+    "swagger-parser": "^10.0.3",
+    "swagger-ui": "^4.10.3",
+    "swagger-ui-dist": "^4.10.3",
+    "swagger-ui-express": "^4.3.0",
+    "validator": "^13.7.0"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^6.1.1",
+    "cross-env": "^7.0.3",
+    "jest": "^27.4.3",
+    "nodemon": "^2.0.15",
+    "supertest": "^6.1.6",
+    "supertest-session": "^4.1.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coveragePathIgnorePatterns": [
+      "/node_modules/"
+    ]
+  },
+  "engines": {
+    "node": "14.x"
+  }
+}
