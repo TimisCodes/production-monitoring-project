@@ -8,3 +8,4 @@ pub_key.pem
 /templates
 .vscode/
 *node_modules/*
+tests/testData

@@ -223,6 +223,18 @@ production-web-devops-platform/
 └── README.md
 ```
 
+── app/                        <-- Place application code HERE
+│   ├── db/
+│   ├── lib/
+│   ├── models/
+│   ├── resources/
+│   ├── routes/
+│   ├── services/
+│   ├── tests/
+│   ├── index.js
+│   ├── package.json
+│   └── package-lock.json
+
 ---
 
 # Deployment Workflow
