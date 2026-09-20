@@ -103,26 +103,26 @@ jobs:
             IMAGE_TAG="${IMAGE_NAME}:${COMMIT_SHA}"
 
             echo "Pulling latest GadgetStore image (${IMAGE_TAG})..."
-            docker pull ${IMAGE_TAG}
+            sudo docker pull ${IMAGE_TAG}
 
             echo "Stopping old container..."
-            docker stop ${CONTAINER_NAME} || true
+            sudo docker stop ${CONTAINER_NAME} || true
 
             echo "Removing old container..."
-            docker rm ${CONTAINER_NAME} || true
+            sudo docker rm ${CONTAINER_NAME} || true
 
             echo "Starting new container..."
-            docker run -d \
+            sudo docker run -d \
               --name ${CONTAINER_NAME} \
               --restart unless-stopped \
               -p ${HOST_PORT}:${CONTAINER_PORT} \
               ${IMAGE_TAG}
 
             echo "Cleaning up dangling images..."
-            docker image prune -f
+            sudo docker image prune -f
 
             echo "Deployment completed."
-            docker ps
+            sudo docker ps
         env:
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           CONTAINER_NAME: ${{ env.CONTAINER_NAME }}
