@@ -52,6 +52,7 @@ jobs:
     name: Build and Push Docker Image
     needs: test
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Checkout repository
@@ -85,6 +86,7 @@ jobs:
     name: Deploy to AWS EC2
     needs: docker
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Deploy to EC2
