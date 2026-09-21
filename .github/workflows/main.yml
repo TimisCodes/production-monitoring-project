@@ -79,6 +79,19 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+     # ----------------------------------------
+      # Trivy vulnerability scan
+      # ----------------------------------------
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.IMAGE_NAME }}:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
   #
   # ==========================================
   # 3. DEPLOY TO AWS EC2
