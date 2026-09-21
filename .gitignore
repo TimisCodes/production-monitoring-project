@@ -1,4 +1,12 @@
 keys/
-.terraform/
-*.tfstate
-*.tfstate.*
+
+# Terraform generated files
+terraform/.terraform/
+
+# Terraform state
+terraform/*.tfstate
+terraform/*.tfstate.*
+
+# Terraform crash logs
+terraform/crash.log
+terraform/crash.*.log
