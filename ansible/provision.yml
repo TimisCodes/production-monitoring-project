@@ -1,5 +1,5 @@
 ---
-- name: Test post-install role
+- name: Provision web servers
   hosts: webservers
   become: true
 
