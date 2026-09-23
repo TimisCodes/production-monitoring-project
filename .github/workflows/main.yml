@@ -79,7 +79,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-<<<<<<< HEAD
      # ----------------------------------------
       # Trivy vulnerability scan
       # ----------------------------------------
@@ -93,8 +92,6 @@ jobs:
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
 
-=======
->>>>>>> ac15910dd4f234861b800935865b96fe409284c7
   #
   # ==========================================
   # 3. DEPLOY TO AWS EC2

@@ -1,0 +1,409 @@
+```groovy
+pipeline {
+
+    agent any
+
+    // ========================================================
+    // Environment Variables
+    // ========================================================
+
+    environment {
+
+        IMAGE_NAME = 'timiscode/gadget'
+        CONTAINER_NAME = 'gadget'
+
+        HOST_PORT = '2301'
+        CONTAINER_PORT = '80'
+
+        // Jenkins Credentials IDs
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+
+        EC2_HOST = credentials('ec2-host')
+    }
+
+
+    // ========================================================
+    // Pipeline Options
+    // ========================================================
+
+    options {
+
+        // Keep only the last 10 builds
+        buildDiscarder(
+            logRotator(
+                numToKeepStr: '10'
+            )
+        )
+
+        // Prevent overlapping deployments
+        disableConcurrentBuilds()
+
+        // Add timestamps to Jenkins console output
+        timestamps()
+
+        // Stop pipeline after 30 minutes
+        timeout(
+            time: 30,
+            unit: 'MINUTES'
+        )
+    }
+
+
+    // ========================================================
+    // Stages
+    // ========================================================
+
+    stages {
+
+
+        // ====================================================
+        // 1. CHECKOUT
+        // ====================================================
+
+        stage('Checkout') {
+
+            steps {
+
+                echo 'Checking out source code...'
+
+                checkout scm
+
+            }
+        }
+
+
+        // ====================================================
+        // 2. INSTALL DEPENDENCIES
+        // ====================================================
+
+        stage('Install Dependencies') {
+
+            steps {
+
+                echo 'Installing React dependencies...'
+
+                dir('gadgetstore') {
+
+                    sh '''
+                        node --version
+                        npm --version
+
+                        npm ci
+                    '''
+
+                }
+
+            }
+        }
+
+
+        // ====================================================
+        // 3. TEST APPLICATION
+        // ====================================================
+
+        stage('Test') {
+
+            steps {
+
+                echo 'Running React application tests...'
+
+                dir('gadgetstore') {
+
+                    sh '''
+                        npm run test -- --run
+                    '''
+
+                }
+
+            }
+        }
+
+
+        // ====================================================
+        // 4. BUILD REACT APPLICATION
+        // ====================================================
+
+        stage('Build React Application') {
+
+            steps {
+
+                echo 'Building React application...'
+
+                dir('gadgetstore') {
+
+                    sh '''
+                        npm run build
+                    '''
+
+                }
+
+            }
+        }
+
+
+        // ====================================================
+        // 5. BUILD DOCKER IMAGE
+        // ====================================================
+
+        stage('Build Docker Image') {
+
+            steps {
+
+                script {
+
+                    echo "Building Docker image..."
+
+                    sh """
+                        docker build \
+                            -t ${IMAGE_NAME}:${BUILD_NUMBER} \
+                            -t ${IMAGE_NAME}:${GIT_COMMIT} \
+                            -t ${IMAGE_NAME}:latest \
+                            -f gadgetstore/Dockerfile \
+                            gadgetstore
+                    """
+
+                }
+
+            }
+        }
+
+
+        // ====================================================
+        // 6. TRIVY SECURITY SCAN
+        // ====================================================
+
+        stage('Trivy Security Scan') {
+
+            steps {
+
+                echo 'Scanning Docker image for vulnerabilities...'
+
+                sh """
+                    trivy image \
+                        --exit-code 1 \
+                        --ignore-unfixed \
+                        --severity HIGH,CRITICAL \
+                        --vuln-type os,library \
+                        ${IMAGE_NAME}:${GIT_COMMIT}
+                """
+
+            }
+        }
+
+
+        // ====================================================
+        // 7. LOGIN TO DOCKER HUB
+        // ====================================================
+
+        stage('Docker Hub Login') {
+
+            steps {
+
+                echo 'Logging into Docker Hub...'
+
+                sh '''
+                    echo "$DOCKERHUB_CREDENTIALS_PSW" | \
+                    docker login \
+                    -u "$DOCKERHUB_CREDENTIALS_USR" \
+                    --password-stdin
+                '''
+
+            }
+        }
+
+
+        // ====================================================
+        // 8. PUSH DOCKER IMAGE
+        // ====================================================
+
+        stage('Push Docker Image') {
+
+            steps {
+
+                echo 'Pushing Docker image to Docker Hub...'
+
+                sh """
+                    docker push ${IMAGE_NAME}:${BUILD_NUMBER}
+                    docker push ${IMAGE_NAME}:${GIT_COMMIT}
+                    docker push ${IMAGE_NAME}:latest
+                """
+
+            }
+        }
+
+
+        // ====================================================
+        // 9. DEPLOY TO AWS EC2
+        // ====================================================
+
+        stage('Deploy to AWS EC2') {
+
+            steps {
+
+                echo 'Deploying GadgetStore to AWS EC2...'
+
+                sshagent(
+                    credentials: ['ec2-ssh-key']
+                ) {
+
+                    sh """
+
+                        echo "Connecting to EC2..."
+
+                        ssh \
+                            -o StrictHostKeyChecking=no \
+                            ${EC2_USERNAME}@${EC2_HOST} << 'REMOTE_SCRIPT'
+
+                        set -e
+
+                        IMAGE_NAME="${IMAGE_NAME}"
+                        IMAGE_TAG="${GIT_COMMIT}"
+                        CONTAINER_NAME="${CONTAINER_NAME}"
+                        HOST_PORT="${HOST_PORT}"
+                        CONTAINER_PORT="${CONTAINER_PORT}"
+
+                        echo "=========================================="
+                        echo " Starting GadgetStore Deployment"
+                        echo "=========================================="
+
+                        echo ""
+                        echo "Pulling Docker image..."
+
+                        sudo docker pull \\
+                            \${IMAGE_NAME}:\${IMAGE_TAG}
+
+
+                        echo ""
+                        echo "Stopping existing container..."
+
+                        sudo docker stop \\
+                            \${CONTAINER_NAME} || true
+
+
+                        echo ""
+                        echo "Removing existing container..."
+
+                        sudo docker rm \\
+                            \${CONTAINER_NAME} || true
+
+
+                        echo ""
+                        echo "Starting new container..."
+
+                        sudo docker run -d \\
+                            --name \${CONTAINER_NAME} \\
+                            --restart unless-stopped \\
+                            -p \${HOST_PORT}:\${CONTAINER_PORT} \\
+                            \${IMAGE_NAME}:\${IMAGE_TAG}
+
+
+                        echo ""
+                        echo "Waiting for container to start..."
+
+                        sleep 5
+
+
+                        echo ""
+                        echo "Checking container status..."
+
+                        sudo docker ps \
+                            --filter "name=\${CONTAINER_NAME}"
+
+
+                        echo ""
+                        echo "Testing container..."
+
+                        if sudo docker ps \
+                            --filter "name=\${CONTAINER_NAME}" \
+                            --filter "status=running" \
+                            | grep -q "\${CONTAINER_NAME}"; then
+
+                            echo ""
+                            echo "=========================================="
+                            echo " Deployment Successful"
+                            echo "=========================================="
+
+                        else
+
+                            echo ""
+                            echo "=========================================="
+                            echo " Deployment Failed"
+                            echo "=========================================="
+
+                            sudo docker logs \${CONTAINER_NAME}
+
+                            exit 1
+
+                        fi
+
+
+                        echo ""
+                        echo "Cleaning unused Docker images..."
+
+                        sudo docker image prune -f
+
+
+                        echo ""
+                        echo "Deployment completed successfully."
+
+                        REMOTE_SCRIPT
+                    """
+
+                }
+
+            }
+        }
+
+    }
+
+
+    // ========================================================
+    // Post Pipeline Actions
+    // ========================================================
+
+    post {
+
+        success {
+
+            echo '''
+            ==========================================
+            GadgetStore CI/CD Pipeline SUCCESS
+            ==========================================
+            Application tested successfully.
+            Docker image built successfully.
+            Trivy security scan passed.
+            Image pushed to Docker Hub.
+            Application deployed to AWS EC2.
+            ==========================================
+            '''
+        }
+
+
+        failure {
+
+            echo '''
+            ==========================================
+            GadgetStore CI/CD Pipeline FAILED
+            ==========================================
+            Check the Jenkins console output for
+            the failed stage.
+            ==========================================
+            '''
+        }
+
+
+        always {
+
+            echo 'Cleaning Jenkins workspace...'
+
+            sh '''
+                docker logout || true
+            '''
+
+            cleanWs()
+        }
+
+    }
+
+}
+```
