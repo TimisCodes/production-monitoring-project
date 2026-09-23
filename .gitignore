@@ -9,4 +9,7 @@ terraform/*.tfstate.*
 
 # Terraform crash logs
 terraform/crash.log
-terraform/crash.*.log
+terraform/crash.*.log.terraform/
+*.exe
+.terraform/
+*.exe
