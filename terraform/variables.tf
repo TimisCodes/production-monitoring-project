@@ -1,4 +1,5 @@
 variable "aws_region" {
+<<<<<<< HEAD
   description = "AWS Region"
   type        = string
   default     = "us-east-1"
@@ -25,4 +26,9 @@ variable "ansible_server_ip" {
   description = "Public IP of your Ansible main server (e.g., '203.0.113.10/32' or '0.0.0.0/0')"
   type        = string
   default     = "54.81.189.45/32"
+=======
+  description = "AWS region"
+  type        = string
+  default     = "us-east-1"
+>>>>>>> ac15910dd4f234861b800935865b96fe409284c7
 }

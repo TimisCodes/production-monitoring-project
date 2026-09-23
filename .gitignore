@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 keys/
 
 # Terraform generated files
@@ -13,3 +14,6 @@ terraform/crash.*.log.terraform/
 *.exe
 .terraform/
 *.exe
+=======
+keys/
+>>>>>>> ac15910dd4f234861b800935865b96fe409284c7
