@@ -1,0 +1,25 @@
+Creating VPC
+1 VPC - 172.20.0.0/16
+
+2 Public subnets 
+- 172.20.1.0/24 - us-west-1a
+- 172.20.2.0/24 - us-west-1b
+
+2 Private subnets
+- 172.20.3.0/24 - us-west-1a
+- 172.20.4.0/24 - us-west-1b
+
+1 Internet Gateway
+- 0.0.0.0/0 - public
+
+2 NAT Gateway
+- 0.0.0.0/0 private 
+
+2 Route Tables
+- public - 0.0.0.0/0 Internet Gateway
+
+- private - 0.0.0.0/0 NAT Gateway 1
+- private - 0.0.0.0/0 NAT Gateway 2
+
+1 EIP 
+1 Baston Host IN Public Subnet
