@@ -23,3 +23,27 @@ Creating VPC
 
 1 EIP 
 1 Baston Host IN Public Subnet
+
+                         INTERNET 🌍
+                         /        \
+                        /          \
+                       ▼            ▲
+              Internet Gateway    NAT Gateway
+                       │            │
+                       │            │
+              ┌────────┴────────────┴───────┐
+              │             VPC              │
+              │                              │
+              │  Public Subnet               │
+              │       │                      │
+              │       ├── Load Balancer      │
+              │       │                      │
+              │       └── NAT Gateway        │
+              │                              │
+              │  Private Subnet              │
+              │       │                      │
+              │       ├── EC2                │
+              │       │                      │
+              │       └── RDS                │
+              │                              │
+              └──────────────────────────────┘
